@@ -1,2 +1,2 @@
 # kdtree
-A cpp implementation of a kd-tree
+A classical implementation of kd-tree in C++. 
