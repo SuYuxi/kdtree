@@ -1,5 +1,8 @@
 //kd-tree Implemention
 //Inspired by https://leileiluoluo.com/posts/kdtree-algorithm-and-implementation.html
+#ifndef KdTree_H
+#define KdTree_H
+
 #include <vector>
 #include <queue>
 #include <memory>
@@ -279,3 +282,5 @@ private:
 	shared_ptr<KdTreeNode> root;
 
 };
+
+#endif
