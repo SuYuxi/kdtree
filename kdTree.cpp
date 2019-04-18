@@ -13,25 +13,25 @@ using namespace std;
 typedef float PointType;
 typedef vector<PointType> Point; //Presents Point type by vector<int> like (x, y, z)
 
-struct kdTreeNode {
-	kdTreeNode(Point _val = Point(), shared_ptr<kdTreeNode> _leftNode = nullptr, shared_ptr<kdTreeNode> _rightNode = nullptr)
+struct KdTreeNode {
+	KdTreeNode(Point _val = Point(), shared_ptr<KdTreeNode> _leftNode = nullptr, shared_ptr<KdTreeNode> _rightNode = nullptr)
 			  : val(_val)
 			  , leftNode(_leftNode)
 			  , rightNode(_rightNode)
 			  {}
 	Point val;
-	shared_ptr<kdTreeNode> leftNode;
-	shared_ptr<kdTreeNode> rightNode;
+	shared_ptr<KdTreeNode> leftNode;
+	shared_ptr<KdTreeNode> rightNode;
 };
 
 //leftNode store points that point[splitDim] < node[splitDim]
 //rightNode store points that point[splitDim] >= node[splitDim]
-class kdTree {
+class KdTree {
 public:
-	kdTree() : dimension(0), root(nullptr) {
+	KdTree() : dimension(0), root(nullptr) {
 	}
 
-	shared_ptr<kdTreeNode> getKdTreeRoot() {
+	shared_ptr<KdTreeNode> getKdTreeRoot() {
 		return root;
 	}
 
@@ -44,9 +44,9 @@ public:
 
 	//print all Kd Tree's nodes layer by layer using breadth first search
 	void printKdTree() { 
-		queue<shared_ptr<kdTreeNode>> q;
+		queue<shared_ptr<KdTreeNode>> q;
 		q.emplace(root);
-		shared_ptr<kdTreeNode> node;
+		shared_ptr<KdTreeNode> node;
 		cout << "Points are:" << endl;;
 		while(!q.empty())
 		{
@@ -68,17 +68,17 @@ public:
 		cout << "End." << endl;;
 	}
 
-	shared_ptr<kdTreeNode> findMin(shared_ptr<kdTreeNode> node, int dim, int depth) //find the node with the minimum value on dim dimension from depth
+	shared_ptr<KdTreeNode> findMin(shared_ptr<KdTreeNode> node, int dim, int depth) //find the node with the minimum value on dim dimension from depth
 	{
 		if(root == nullptr) return nullptr;
-		shared_ptr<kdTreeNode> minimum = node;
+		shared_ptr<KdTreeNode> minimum = node;
 		findMinHelper(node, minimum, dim, depth);
 		return minimum;
 	}
 
 	bool addNode(Point point) {
 		if(root == nullptr || point.size() != dimension) return false;
-		shared_ptr<kdTreeNode> node = root;
+		shared_ptr<KdTreeNode> node = root;
 		int depth = 0;
 		int curDim;
 		while(true)
@@ -88,7 +88,7 @@ public:
 			{
 				if(node->leftNode == nullptr)
 				{
-					node->leftNode = make_shared<kdTreeNode>(point);
+					node->leftNode = make_shared<KdTreeNode>(point);
 					return true;
 				}
 				node = node->leftNode;
@@ -97,7 +97,7 @@ public:
 			{
 				if(node->rightNode == nullptr)
 				{
-					node->rightNode = make_shared<kdTreeNode>(point);
+					node->rightNode = make_shared<KdTreeNode>(point);
 					return true;
 				}
 				node = node->rightNode;
@@ -113,23 +113,46 @@ public:
 		if(deleteNodeHelper(root, point, 0)) { root = nullptr; }
 	}
 
-	shared_ptr<kdTreeNode> findNearestNode(Point point) {
+	shared_ptr<KdTreeNode> getNode(Point point) {
 		if(root == nullptr || point.size() != dimension) return nullptr;
-		shared_ptr<kdTreeNode> nearestNode = root; 
+		shared_ptr<KdTreeNode> node = root;
+		int depth = 0;
+		int curDim;
+		while(node != nullptr)
+		{
+			if(node->val == point) return node;
+			curDim = depth % dimension;
+			if(node->val[curDim] > point[curDim])
+			{
+				node = node->leftNode;
+			}
+			else
+			{
+				node = node->rightNode;
+			}
+			depth += 1;
+		}
+		
+		return nullptr;
+	}
+
+	shared_ptr<KdTreeNode> findNearestNode(Point point) {
+		if(root == nullptr || point.size() != dimension) return nullptr;
+		shared_ptr<KdTreeNode> nearestNode = root; 
 		float minDist = calDist(point, nearestNode->val);
 		findNearestNodeHelper(root, point, minDist, nearestNode, 0);
 		return nearestNode;
 	}
 
-	vector<shared_ptr<kdTreeNode>> findNearestNodeCluster(Point point, float distance) { //find all nodes with the distance from which to the "point" is less than or equal to the "distance."
-		vector<shared_ptr<kdTreeNode>> cluster;
+	vector<shared_ptr<KdTreeNode>> findNearestNodeCluster(Point point, float distance) { //find all nodes with the distance from which to the "point" is less than or equal to the "distance."
+		vector<shared_ptr<KdTreeNode>> cluster;
 		if(root == nullptr || point.size() != dimension) return cluster;
 		findNearestNodeClusterHelper(root, point, distance, cluster, 0);
 		return cluster;
 	}
 
 private:
-	shared_ptr<kdTreeNode> buildHelper(vector<Point>& points, int leftBorder, int rightBorder, int depth) { //recursively create kd Tree
+	shared_ptr<KdTreeNode> buildHelper(vector<Point>& points, int leftBorder, int rightBorder, int depth) { //recursively create kd Tree
 		if(leftBorder > rightBorder) return nullptr;
 		int curDim = depth % dimension;
 		sort(points.begin() + leftBorder, points.begin() + rightBorder + 1, [curDim](const Point& a, const Point& b) { return a[curDim] < b[curDim]; });
@@ -138,33 +161,33 @@ private:
 		{
 			midInx -= 1;
 		}
-		shared_ptr<kdTreeNode> node = make_shared<kdTreeNode>(points[midInx]);
+		shared_ptr<KdTreeNode> node = make_shared<KdTreeNode>(points[midInx]);
 		node->leftNode = buildHelper(points, leftBorder, midInx - 1, depth + 1);
 		node->rightNode = buildHelper(points, midInx + 1, rightBorder, depth + 1);
 		return node;
 	}
 
-	void findMinHelper(shared_ptr<kdTreeNode>& node, shared_ptr<kdTreeNode>& minimum, const int& dim, const int& depth) {
+	void findMinHelper(shared_ptr<KdTreeNode>& node, shared_ptr<KdTreeNode>& minimum, const int& dim, const int& depth) {
 		if(node == nullptr) return;
 		if(node->val[dim] < minimum->val[dim]) { minimum = node; }
 		findMinHelper(node->leftNode, minimum, dim, depth + 1);
 		if(depth % dimension != dim) { findMinHelper(node->rightNode, minimum, dim, depth + 1); }
 	}
 
-	bool deleteNodeHelper(shared_ptr<kdTreeNode>& node, const Point& point, const int& depth) { //return true means the child node should be deleted
+	bool deleteNodeHelper(shared_ptr<KdTreeNode>& node, const Point& point, const int& depth) { //return true means the child node should be deleted
 		if(node == nullptr) return false;
 		int curDim = depth % dimension;
 		if(point == node->val)
 		{
 			if(node->rightNode != nullptr)
 			{
-				shared_ptr<kdTreeNode> minimumNode = findMin(node->rightNode, curDim, depth + 1);
+				shared_ptr<KdTreeNode> minimumNode = findMin(node->rightNode, curDim, depth + 1);
 				node->val = minimumNode->val; // do not swap(node->val, minimumNode) which would break the structure of kd-tree and result in not finding the node to delete 
 				if(deleteNodeHelper(node->rightNode, minimumNode->val, depth + 1)) { node->rightNode = nullptr; }
 			}
 			else if(node->leftNode != nullptr)
 			{
-				shared_ptr<kdTreeNode> minimumNode = findMin(node->leftNode, curDim, depth + 1);
+				shared_ptr<KdTreeNode> minimumNode = findMin(node->leftNode, curDim, depth + 1);
 				node->val = minimumNode->val;
 				if(deleteNodeHelper(node->leftNode, minimumNode->val, depth + 1)) { node->leftNode = nullptr; }
 				node->rightNode = node->leftNode;
@@ -189,7 +212,7 @@ private:
 		return false;
 	}
 
-	void findNearestNodeHelper(shared_ptr<kdTreeNode>& node, const Point& point, float& minDist, shared_ptr<kdTreeNode>& nearestNode, const int& depth) {
+	void findNearestNodeHelper(shared_ptr<KdTreeNode>& node, const Point& point, float& minDist, shared_ptr<KdTreeNode>& nearestNode, const int& depth) {
 		if(node == nullptr) return;
 		int curDim = depth % dimension;
 		float dist = calDist(point, node->val);
@@ -216,7 +239,7 @@ private:
 		}
 	}
 
-	void findNearestNodeClusterHelper(shared_ptr<kdTreeNode>& node, const Point& point, const float& distance, vector<shared_ptr<kdTreeNode>>& cluster, const int& depth) {
+	void findNearestNodeClusterHelper(shared_ptr<KdTreeNode>& node, const Point& point, const float& distance, vector<shared_ptr<KdTreeNode>>& cluster, const int& depth) {
 		if(node == nullptr) return;
 		int curDim = depth % dimension;
 		float dist = calDist(point, node->val);
@@ -253,6 +276,6 @@ private:
 	}
 
 	int dimension;
-	shared_ptr<kdTreeNode> root;
+	shared_ptr<KdTreeNode> root;
 
 };
