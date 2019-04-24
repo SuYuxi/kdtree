@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "KdTree.cpp"
+
+using namespace kdtree;
 //test sample
 int main() {
 	vector<Point> points = {{1,2,30}, {2,3,14}, {3,4,66}, {4,5,26}, {1,12,33}, {1,52,73}};
